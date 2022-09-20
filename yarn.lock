@@ -3609,6 +3609,11 @@ diff-sequences@^26.6.2:
   resolved "https://registry.yarnpkg.com/diff-sequences/-/diff-sequences-26.6.2.tgz#48ba99157de1923412eed41db6b6d4aa9ca7c0b1"
   integrity sha512-Mv/TDa3nZ9sbc5soK+OoA74BsS3mL37yixCvUAQkiuA4Wz6YtwP/K47n2rv2ovzHZvoiQeA5FTQOschKkEwB0Q==
 
+digitalsignals@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/digitalsignals/-/digitalsignals-1.0.0.tgz#ce7a0725bf7386036ff4dc54f85a634ed8fdc448"
+  integrity sha512-6q18W77HvKCSJ9zOl7EhMfJzwEzjrv0QuIcTVPhePQ4vXkD/r27kDHsoGlqilrOQMsQzwhmMg5MT5qYtW/Wl+g==
+
 dir-glob@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/dir-glob/-/dir-glob-3.0.1.tgz#56dbf73d992a4a93ba1584f4534063fd2e41717f"
@@ -4303,6 +4308,11 @@ file-entry-cache@^6.0.1:
   integrity sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==
   dependencies:
     flat-cache "^3.0.4"
+
+fili@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/fili/-/fili-2.0.3.tgz#a2a62dd77f1f2b98e9afff173d24167f4221a83d"
+  integrity sha512-NW/EY++EMP9f4mSpVCjg5PJnAkkxzh170My+R18sh4CSXu3Puxw3Cs4aQmXoUtNg1EonZmvmR5TLcKEJtX5hQg==
 
 fill-range@^4.0.0:
   version "4.0.0"

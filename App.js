@@ -16,8 +16,8 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import Fili from 'fili';
 
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-react-native/dist/platform_react_native';
 
@@ -28,13 +28,42 @@ const App: () => Node = () => {
   const [data, setData] = useState();
   const [frontalAverage, setFrontalAverage] = useState(0);
   const [memory, setMemory] = useState([]);
-  const last100Average = memory.reduce((a, b) => a + b, 0) / memory.length;
-  if (tfReady){
-    const input = tf.tensor1d(memory);
-    tf.signal.stft(input, 3, 1);
-    console.log(tf.signal.stft(input, 3, 1).arraySync());
-  }
-  const delta = frontalAverage - last100Average;
+  const [ratio, setRatio] = useState([]);
+  useEffect(() => {
+    if (memory.length > 1) {
+      const iirCalculator = new Fili.CalcCascades();
+      const availableFilters = iirCalculator.available();
+      const iirFilterCoeffsAlpha = iirCalculator.bandpass({
+        order: 1, // cascade 3 biquad filters (max: 12)
+        characteristic: 'butterworth',
+        Fs: 128, // sampling frequency
+        Fc: 5.5, // cutoff frequency / center frequency for bandpass, bandstop, peak,
+        BW: 3, // bandwidth only for bandstop and bandpass filters - optional
+        gain: 0, // gain for peak, lowshelf and highshelf
+        preGain: false, // adds one constant multiplication for highpass and lowpass
+        // k = (1 + cos(omega)) * 0.5 / k = 1 with preGain == false
+      });
+      const iirFilterCoeffsTheta = iirCalculator.bandpass({
+        order: 1, // cascade 3 biquad filters (max: 12)
+        characteristic: 'butterworth',
+        Fs: 128, // sampling frequency
+        Fc: 10.5, // cutoff frequency / center frequency for bandpass, bandstop, peak,
+        BW: 5, // bandwidth only for bandstop and bandpass filters - optional
+        gain: 0, // gain for peak, lowshelf and highshelf
+        preGain: false, // adds one constant multiplication for highpass and lowpass
+        // k = (1 + cos(omega)) * 0.5 / k = 1 with preGain == false
+      });
+      const filterAplha = new Fili.IirFilter(iirFilterCoeffsAlpha);
+      const filterTheta = new Fili.IirFilter(iirFilterCoeffsTheta);
+      const alpha = filterAplha.simulate(memory);
+      const theta = filterTheta.simulate(memory);
+      const finalRatio = alpha.map((e, i) => e / theta[i]);
+      setRatio(finalRatio);
+    }
+  }, [memory]);
+  const last100Average = ratio.reduce((a, b) => a + b, 0) / memory.length;
+  const lastRatio = ratio.length > 0 ? ratio[ratio.length - 1] : 0;
+  const delta = lastRatio - last100Average;
 
   useEffect(() => {
     const ws = new WebSocket('https://685a-185-209-196-175.eu.ngrok.io');
@@ -54,13 +83,13 @@ const App: () => Node = () => {
 
       setData(finalData);
     };
-    const tfProcess = async () => {
-      // await tf.setBackend('rn-webgl');
-      await tf.ready();
-      // Signal to the app that tensorflow.js can now be used.
-      setTfReady(true);
-    };
-    tfProcess();
+    // const tfProcess = async () => {
+    //   // await tf.setBackend('rn-webgl');
+    //   await tf.ready();
+    //   // Signal to the app that tensorflow.js can now be used.
+    //   setTfReady(true);
+    // };
+    // tfProcess();
   }, []);
   useEffect(() => {
     const finalMemory = [...memory, frontalAverage];
