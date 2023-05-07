@@ -15,6 +15,8 @@ import {
   Text,
   useColorScheme,
   View,
+  TextInput,
+  Button,
 } from 'react-native';
 import Fili from 'fili';
 
@@ -26,6 +28,7 @@ const App: () => Node = () => {
 
   const [tfReady, setTfReady] = useState(false);
   const [data, setData] = useState();
+  const [url, onChangeUrl] = React.useState('');
   const [frontalAverage, setFrontalAverage] = useState(0);
   const [memory, setMemory] = useState([]);
   const [ratio, setRatio] = useState([]);
@@ -64,33 +67,57 @@ const App: () => Node = () => {
   const last100Average = ratio.reduce((a, b) => a + b, 0) / memory.length;
   const lastRatio = ratio.length > 0 ? ratio[ratio.length - 1] : 0;
   const delta = lastRatio - last100Average;
-
-  useEffect(() => {
-    const ws = new WebSocket('https://685a-185-209-196-175.eu.ngrok.io');
-    ws.onopen = e => {
-      console.log('connected');
-    };
-    ws.onmessage = e => {
-      // a message was received
-      const finalData = e?.data.split(', ').map(e => parseFloat(e));
-      let finalFrontalAverage = finalData && [...finalData];
-      if (finalFrontalAverage) {
-        finalFrontalAverage.splice(4, 6);
-        finalFrontalAverage =
-          finalFrontalAverage.reduce((a, b) => a + b, 0) / 8;
+  const urlSubmit = () => {
+    let newUrl = url.replace(' ', '');
+    const expressionWithHtml =
+      /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&\/=]*)$/;
+    const expressionWithoutHtml =
+      /^[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+    const expressionWithHtmlRegex = new RegExp(expressionWithHtml);
+    const expressionWithoutHtmlRegex = new RegExp(expressionWithoutHtml);
+    if (!newUrl.match(expressionWithHtmlRegex)) {
+      if (!newUrl.match(expressionWithoutHtmlRegex)) {
+        console.log('Bad Url');
+        alert('Bad Url');
+        return;
+      } else {
+        newUrl = 'http://' + newUrl;
       }
-      setFrontalAverage(finalFrontalAverage);
+    }
+    try {
+      const ws = new WebSocket(newUrl);
+      ws.onopen = e => {
+        console.log('connected');
+      };
+      ws.onmessage = e => {
+        // a message was received
+        const finalData = e?.data.split(', ').map(e => parseFloat(e));
+        let finalFrontalAverage = finalData && [...finalData];
+        if (finalFrontalAverage) {
+          finalFrontalAverage.splice(4, 6);
+          finalFrontalAverage =
+            finalFrontalAverage.reduce((a, b) => a + b, 0) / 8;
+        }
+        setFrontalAverage(finalFrontalAverage);
 
-      setData(finalData);
-    };
-    // const tfProcess = async () => {
-    //   // await tf.setBackend('rn-webgl');
-    //   await tf.ready();
-    //   // Signal to the app that tensorflow.js can now be used.
-    //   setTfReady(true);
-    // };
-    // tfProcess();
-  }, []);
+        setData(finalData);
+      };
+    } catch (e) {
+      console.log('Bad Url');
+      alert('Bad Url');
+      console.log(e);
+    }
+  };
+  // useEffect(() => {
+  //
+  //   // const tfProcess = async () => {
+  //   //   // await tf.setBackend('rn-webgl');
+  //   //   await tf.ready();
+  //   //   // Signal to the app that tensorflow.js can now be used.
+  //   //   setTfReady(true);
+  //   // };
+  //   // tfProcess();
+  // }, []);
   useEffect(() => {
     const finalMemory = [...memory, frontalAverage];
     while (finalMemory.length > 100) {
@@ -106,6 +133,22 @@ const App: () => Node = () => {
         style={{height: '100%', margin: 24}}>
         <View>
           <Text>TensorFlow.js ready? {tfReady ? <Text>✅</Text> : ''}</Text>
+        </View>
+        <View>
+          <TextInput
+            onChangeText={onChangeUrl}
+            value={url}
+            style={{
+              height: 40,
+              margin: 12,
+              borderWidth: 1,
+              padding: 10,
+              borderColor: '#000',
+            }}
+          />
+        </View>
+        <View>
+          <Button title="Connect" onPress={urlSubmit} />
         </View>
         <View>
           <Text>
